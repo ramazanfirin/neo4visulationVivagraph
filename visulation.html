@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>01. Create Graph. Vivagraph SVG tutorial.</title>
+      <link href='global.css' rel='stylesheet'>
+	<script type="text/javascript" src="vivagraph.js"></script>
+	  <link rel="stylesheet" href="jquery-ui.css">
+  <script src="jquery-1.9.1.js"></script>
+  <script src="jquery-ui.js"></script>
+    <script type="text/javascript">
+        var graph;
+		var renderer
+		
+		
+		
+		function main () {
+            // Step 1. We create a graph object.
+            graph = Viva.Graph.graph();
+
+			var layout = Viva.Graph.Layout.forceDirected(graph, {
+				 springLength : 150,
+				 springCoeff : 0.0011,
+				 dragCoeff : 0.00,
+				 gravity : -10
+			 });
+            // Step 2. We add nodes and edges to the graph:
+           
+
+            /* Note: graph.addLink() creates new nodes if they are not yet
+               present in the graph. Thus calling this method is equivalent to:
+
+               graph.addNode(1);
+               graph.addNode(2);
+               graph.addLink(1, 2);
+            */
+			
+			// Step 3. Render the graph.
+           
+			
+			
+			var graphics = Viva.Graph.View.svgGraphics(),
+                nodeSize = 24,
+                // we use this method to highlight all realted links
+                // when user hovers mouse over a node:
+                highlightRelatedNodes = function(nodeId, isOn) {
+                   // just enumerate all realted nodes and update link color:
+                   graph.forEachLinkedNode(nodeId, function(node, link){
+                       var linkUI = graphics.getLinkUI(link.id);
+                       if (linkUI) {
+                           // linkUI is a UI object created by graphics below
+                           linkUI.attr('stroke', isOn ? 'red' : 'gray');
+                       }
+                   });
+                };
+				
+				 renderer = Viva.Graph.View.renderer(graph, {
+                    graphics : graphics,
+					 layout     : layout
+								
+                });
+            renderer.run();
+				
+			graphics.node(function(node) {
+					 
+				var ui = Viva.Graph.svg('g'),
+                  // Create SVG text element with user id as content
+                  svgText = Viva.Graph.svg('text').attr('y', '-4px').text(node.id+"-"+node.data),
+                  img = Viva.Graph.svg('image')
+                     .attr('width', nodeSize)
+                     .attr('height', nodeSize)
+                     .link('./computer.png');
+
+              ui.append(svgText);
+              ui.append(img);	 
+					 
+
+                $(ui).click(function() { // mouse over
+                    getProperties(node.id, true);
+                });
+				
+				$(ui).dblclick(function() { // mouse over
+                    getOutRelation(node.id, true);
+					getInRelation(node.id, true);
+                });
+                return ui;
+            }).placeNode(function(nodeUI, pos) {
+                nodeUI.attr('transform',
+                            'translate(' +
+                                  (pos.x - nodeSize/2) + ',' + (pos.y - nodeSize/2) +
+                            ')');
+            });	
+			
+			
+			 
+			
+			var createMarker = function(id) {
+                    return Viva.Graph.svg('marker')
+                               .attr('id', id)
+                               .attr('viewBox', "0 0 10 10")
+                               .attr('refX', "10")
+                               .attr('refY', "5")
+                               .attr('markerUnits', "strokeWidth")
+                               .attr('markerWidth', "10")
+                               .attr('markerHeight', "5")
+                               .attr('orient', "auto");
+                },
+
+                marker = createMarker('Triangle');
+            marker.append('path').attr('d', 'M 0 0 L 10 5 L 0 10 z');
+			
+			var defs = graphics.getSvgRoot().append('defs');
+            defs.append(marker);
+			var geom = Viva.Graph.geom();
+				
+			graphics.link(function(link){
+                var ui= Viva.Graph.svg('path')
+                           .attr('stroke', 'gray')
+                          .attr('marker-end', 'url(#Triangle)');
+				
+				var svgText = Viva.Graph.svg('text').attr('y', '-4px').text("deneme");	
+				ui.text("svgText");
+				
+				
+				
+				
+				$(ui).click(function() { // mouse over
+                    alert("test");
+                });
+				
+				return ui;	
+				
+										   
+            }).placeLink(function(linkUI, fromPos, toPos) {
+                // Here we should take care about
+                //  "Links should start/stop at node's bounding box, not at the node center."
+
+                // For rectangular nodes Viva.Graph.geom() provides efficient way to find
+                // an intersection point between segment and rectangle
+                var toNodeSize = nodeSize,
+                    fromNodeSize = nodeSize;
+
+                var from = geom.intersectRect(
+                        // rectangle:
+                                fromPos.x - fromNodeSize / 2, // left
+                                fromPos.y - fromNodeSize / 2, // top
+                                fromPos.x + fromNodeSize / 2, // right
+                                fromPos.y + fromNodeSize / 2, // bottom
+                        // segment:
+                                fromPos.x, fromPos.y, toPos.x, toPos.y)
+                           || fromPos; // if no intersection found - return center of the node
+
+                var to = geom.intersectRect(
+                        // rectangle:
+                                toPos.x - toNodeSize / 2, // left
+                                toPos.y - toNodeSize / 2, // top
+                                toPos.x + toNodeSize / 2, // right
+                                toPos.y + toNodeSize / 2, // bottom
+                        // segment:
+                                toPos.x, toPos.y, fromPos.x, fromPos.y)
+                            || toPos; // if no intersection found - return center of the node
+
+                var data = 'M' + from.x + ',' + (from.y) +
+                           'L' + to.x + ',' + (to.y);
+
+                linkUI.attr("d", data);
+            });
+			
+			
+			// To render an arrow we have to address two problems:
+            //  1. Links should start/stop at node's bounding box, not at the node center.
+            //  2. Render an arrow shape at the end of the link.
+
+            // Rendering arrow shape is achieved by using SVG markers, part of the SVG
+            // standard: http://www.w3.org/TR/SVG/painting.html#Markers
+            
+
+            // Marker should be defined only once in <defs> child element of root <svg> element:
+            
+				
+			
+
+
+
+
+
+
+
+
+
+
+			getOutRelation = function(nodeId, isOn) {
+                  // alert("getAllrelation");
+				 var out;
+				var res ;	
+				var id ; 
+				   
+				   $.get( "http://10.248.68.88:7474/db/data/node/"+nodeId+"/relationships/out", function( data ) {
+						  //alert( "Load was performed." );
+						  for(var index in data) {
+							out = data[index];
+							res = out.end.split("/");	
+							id = res[6];
+							
+								$.get( out.end, function( dataEnd ) {
+									//alert(id + "-"+dataEnd.data.name);
+									var name;
+									var localId;
+									if (dataEnd.data.name){
+										name = dataEnd.data.name;
+										var values = dataEnd.self.split("/");
+										localId = values[6];
+									}
+									
+																		
+									graph.addNode(localId,name);
+									graph.addLink(nodeId, localId);
+								});
+								
+							//alert("Key: "+index+" value:"+out);
+						}
+						});
+              };
+			  
+			  getInRelation = function(nodeId, isOn) {
+                   //alert("getAllrelation");
+				   $.get( "http://10.248.68.88:7474/db/data/node/"+nodeId+"/relationships/in", function( data ) {
+						  //alert( "Load was performed." );
+						  for(var index in data) {
+							var out = data[index];
+							var res = out.start.split("/");	
+							var id = res[6];
+							
+								$.get( out.start, function( dataEnd ) {
+									//alert(dataEnd);
+									var name;
+									var localId;
+									if (dataEnd.data.name){
+										name = dataEnd.data.name;
+										var values = dataEnd.self.split("/");
+										localId = values[6];
+									}
+									
+									
+									graph.addNode(localId,name);
+								graph.addLink(localId,nodeId);
+						});
+								
+							//alert("Key: "+index+" value:"+out);
+						}
+						});
+              };
+				
+				getProperties = function(nodeId, isOn) {
+                   //alert("getProperties");
+					$('#explanation').html("");
+					$.get( "http://10.248.68.88:7474/db/data/node/"+nodeId+"/properties", function( data ) {
+					  for(var key in data) {
+							var val = data[key];
+							$('#explanation').append(key+"="+val+"<br></br>");
+						}
+
+						});
+			
+                };
+				
+			
+			
+			 //graph.addNode(1);
+			 //var middle = graph.getNode(1);
+             // middle.isPinned = true;
+			 
+			 var neoid = window.location.search.substring(1).split("=")[1];
+			 if ( neoid != "") {
+				$( "#neoid" ).val(neoid);
+				search();
+			  };
+			 
+				
+			 
+
+
+            
+        }
+		
+		  $( document ).ready(function() {
+        $( "#button" ).click(function( event ) {
+            search();
+			event.preventDefault();
+        });
+    });
+	
+	function search(){
+		//alert( "The link will no longer take you to jquery.com" );
+            
+			var restServerURL = "http://10.248.68.88:7474/db/data";
+			var temp = $( "#neoid" ).val();
+			var query = "START root=node(*) where has(root.name) and root.name ='"+temp+"' RETURN ID(root),root.name ";
+			var query2 = "START root=node(*) where has(root.name) and root.name ='"+temp+"' RETURN ID(root),root.name ";
+			
+			$.ajax({
+				type:"POST",
+				url: restServerURL + "/cypher",
+				accepts: "application/json",
+				dataType: "json",
+				
+				headers: { 
+				  "X-Stream": "true"    
+				},
+				data:{ "query" : query, },
+				success: function(data, textStatus, jqXHR){
+				 var id = data.data[0];
+				 if(id){
+					graph.addNode(data.data[0][0],data.data[0][1]);
+				}
+				},
+				
+				error: function(jqXHR, textStatus, errorThrown){
+				 alert(errorThrown);
+				 console.log(textStatus);
+				}
+			  });//end of ajax
+	
+	}
+		
+		
+    </script>
+
+    <style type="text/css" media="screen">
+        html, body, svg { width: 100%; height: 100%;}
+    </style>
+</head>
+<body onload='main()'>
+<header>
+      <section id='title'>
+        <h2>MW SDA</h2>
+        <p>Dont forget Butterfly Effect </p>
+      </section>
+      <section id='search'>
+        <form action='/' method='get'>
+          <label>Search:</label>
+          <input id='neoid' name='neoid' type='text' value='15'>
+          <input class='button' id='button' type='button' value='Load'>
+        </form>
+      </section>
+      <br style='clear: both;'>
+	</header>
+	
+	<section id='content'>
+      
+    </section>
+    <aside>
+      <div id='explanation'>
+        <!-- Neo News introduction -->
+
+      </div>
+     
+    </aside>
+
+</body>
+</html>
