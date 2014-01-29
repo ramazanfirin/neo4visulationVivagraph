@@ -194,7 +194,7 @@
 				var res ;	
 				var id ; 
 				   
-				   $.get( "http://10.248.68.88:7474/db/data/node/"+nodeId+"/relationships/out", function( data ) {
+				   $.get( "http://localhost:7474/db/data/node/"+nodeId+"/relationships/out", function( data ) {
 						  //alert( "Load was performed." );
 						  for(var index in data) {
 							out = data[index];
@@ -223,7 +223,7 @@
 			  
 			  getInRelation = function(nodeId, isOn) {
                    //alert("getAllrelation");
-				   $.get( "http://10.248.68.88:7474/db/data/node/"+nodeId+"/relationships/in", function( data ) {
+				   $.get( "http://localhost:7474/db/data/node/"+nodeId+"/relationships/in", function( data ) {
 						  //alert( "Load was performed." );
 						  for(var index in data) {
 							var out = data[index];
@@ -253,7 +253,7 @@
 				getProperties = function(nodeId, isOn) {
                    //alert("getProperties");
 					$('#explanation').html("");
-					$.get( "http://10.248.68.88:7474/db/data/node/"+nodeId+"/properties", function( data ) {
+					$.get( "http://localhost:7474/db/data/node/"+nodeId+"/properties", function( data ) {
 					  for(var key in data) {
 							var val = data[key];
 							$('#explanation').append(key+"="+val+"<br></br>");
@@ -292,7 +292,7 @@
 	function search(){
 		//alert( "The link will no longer take you to jquery.com" );
             
-			var restServerURL = "http://10.248.68.88:7474/db/data";
+			var restServerURL = "http://localhost:7474/db/data";
 			var temp = $( "#neoid" ).val();
 			var query = "START root=node(*) where has(root.name) and root.name ='"+temp+"' RETURN ID(root),root.name ";
 			var query2 = "START root=node(*) where has(root.name) and root.name ='"+temp+"' RETURN ID(root),root.name ";
